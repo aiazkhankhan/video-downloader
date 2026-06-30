@@ -12,7 +12,7 @@ document.getElementById('downloadBtn').addEventListener('click', async () => {
     resultArea.style.display = 'none';
 
     try {
-        const response = await fetch('http://localhost:5000/api/download', {
+        const response = await fetch('https://video-downloader-two-eta.vercel.app/api/download', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ videoUrl: videoUrl })
