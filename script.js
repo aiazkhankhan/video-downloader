@@ -1,8 +1,8 @@
 // Background me bina video play kiye direct video save karne ka function
-async function triggerDirectDownload(url, filename) {
+async function startDirectDownload(url, filename) {
     try {
         const response = await fetch(url);
-        if (!response.ok) throw new Error("Network response error");
+        if (!response.ok) throw new Error("Fetch failed");
         
         const blob = await response.blob();
         const blobUrl = window.URL.createObjectURL(blob);
@@ -18,7 +18,7 @@ async function triggerDirectDownload(url, filename) {
         window.URL.revokeObjectURL(blobUrl);
         document.body.removeChild(a);
     } catch (error) {
-        // Agar high encryption video block ho rahi ho browser fetch se, toh location stream se window par direct download hogi
+        // Agar fetch block ho, toh usi window me safe download trigger ho jaye
         window.location.href = url;
     }
 }
@@ -26,15 +26,23 @@ async function triggerDirectDownload(url, filename) {
 async function fetchVideo() {
     const videoUrl = document.getElementById('videoUrl').value.trim();
     if (!videoUrl) {
-        alert('Please paste a valid video link!');
+        alert('Please paste a valid TikTok link!');
         return;
     }
 
-    const btn = document.querySelector('button');
+    if (!videoUrl.includes('tiktok.com')) {
+        alert('This downloader is only for TikTok videos! Please paste a valid TikTok link.');
+        return;
+    }
+
+    const btn = document.getElementById('fetchBtn') || document.querySelector('button');
+    const loader = document.getElementById('loader');
+
     if (btn) btn.innerText = "Downloading...";
+    if (loader) loader.style.display = 'block';
 
     try {
-        // Tamam requests secure server backend ke raste jayengi
+        // Direct TikTok working backend call
         const res = await fetch('/api/download', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -44,28 +52,24 @@ async function fetchVideo() {
         const data = await res.json();
         
         if (data && data.downloadUrl) {
-            let filename = 'video_download.mp4';
-            if (videoUrl.includes('tiktok.com')) filename = 'tiktok_video.mp4';
-            if (videoUrl.includes('instagram.com')) filename = 'instagram_video.mp4';
-            if (videoUrl.includes('facebook.com') || videoUrl.includes('fb.watch')) filename = 'facebook_video.mp4';
-
-            // Background download active karein
-            await triggerDirectDownload(data.downloadUrl, filename);
+            // Video bina play hue direct file download hogi
+            await startDirectDownload(data.downloadUrl, 'tiktok_video.mp4');
         } else if (data && data.error) {
             alert(data.error);
         } else {
-            alert('Could not download this specific video. Try another link!');
+            alert('Could not download this TikTok video. Please try another link!');
         }
     } catch (err) {
         console.error(err);
-        alert('Server is currently under high load. Please try again in a few moments!');
+        alert('Server connection error. Please try again!');
     }
 
     if (btn) btn.innerText = "Fetch Video";
+    if (loader) loader.style.display = 'none';
 }
 
-// Button selection check
-const mainBtn = document.querySelector('button');
+// Button setup
+const mainBtn = document.getElementById('fetchBtn') || document.querySelector('button');
 if (mainBtn) {
     mainBtn.addEventListener('click', fetchVideo);
 }

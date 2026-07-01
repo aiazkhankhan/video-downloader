@@ -3,39 +3,31 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>All-in-One Video Downloader</title>
+    <title>TikTok Video Downloader</title>
     <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- FontAwesome Logos ke liye -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
+    <div class="container">
+        <h1>TikTok Video Downloader</h1>
+        <p>Download your favorite TikTok videos without watermark instantly!</p>
 
-    <div class="downloader-container">
-        <h1>Universal Video Downloader</h1>
-        <p>Download videos from Instagram, TikTok, Twitter, & Facebook without watermark!</p>
-
-        <div class="platform-icons">
-            <i class="fab fa-instagram" style="color: #E1306C;"></i>
-            <i class="fab fa-tiktok" style="color: #000000;"></i>
-            <i class="fab fa-twitter" style="color: #1DA1F2;"></i>
-            <i class="fab fa-facebook" style="color: #1877F2;"></i>
+        <!-- Sirf TikTok Ka Single Bada Logo -->
+        <div class="logo-container">
+            <i class="fab fa-tiktok single-tiktok-logo"></i>
         </div>
 
         <div class="input-area">
-            <input type="text" id="videoUrl" placeholder="Paste video link here...">
-            <button id="downloadBtn"><i class="fas fa-download"></i> Fetch Video</button>
+            <input type="text" id="videoUrl" placeholder="Paste TikTok video link here...">
+            <button id="fetchBtn">Fetch Video</button>
         </div>
 
-        <div class="loader" id="loader" style="display: none;"></div>
-
-        <div class="result-area" id="resultArea" style="display: none;">
-            <h3>Video Parsed Successfully!</h3>
-            <a href="#" id="finalDownloadLink"><button class="success-btn"></button></a>
+        <!-- Loader/Spinner -->
+        <div id="loader" class="loader" style="display: none;">
+            <div class="spinner"></div>
         </div>
     </div>
-
-    <footer>
-        <p>Designed with by Aizaz Khan</p>
-    </footer>
 
     <script src="script.js"></script>
 </body>
