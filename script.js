@@ -1,8 +1,8 @@
-// Video file ko background me fetch kar ke direct download (save) karwane ka function
-async function startDirectDownload(url, filename) {
+// Background me bina video play kiye direct video save karne ka function
+async function triggerDirectDownload(url, filename) {
     try {
         const response = await fetch(url);
-        if (!response.ok) throw new Error("Fetch failed");
+        if (!response.ok) throw new Error("Network response error");
         
         const blob = await response.blob();
         const blobUrl = window.URL.createObjectURL(blob);
@@ -18,8 +18,8 @@ async function startDirectDownload(url, filename) {
         window.URL.revokeObjectURL(blobUrl);
         document.body.removeChild(a);
     } catch (error) {
-        // Agar high-security video ho aur blob block ho, toh safe option direct window stream hai
-        window.location.href = url; 
+        // Agar high encryption video block ho rahi ho browser fetch se, toh location stream se window par direct download hogi
+        window.location.href = url;
     }
 }
 
@@ -33,60 +33,38 @@ async function fetchVideo() {
     const btn = document.querySelector('button');
     if (btn) btn.innerText = "Downloading...";
 
-    // 1. TIKTOK KE LIYE (Aapka backend perfect chal raha hai)
-    if (videoUrl.includes('tiktok.com')) {
-        try {
-            const res = await fetch('/api/download', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ videoUrl })
-            });
-            const data = await res.json();
-            if (data.downloadUrl) {
-                await startDirectDownload(data.downloadUrl, 'tiktok_video.mp4');
-                if (btn) btn.innerText = "Fetch Video";
-                return;
-            }
-        } catch (err) {
-            console.log("TikTok Backend Failed");
-        }
-    }
-
-    // 2. INSTAGRAM & FACEBOOK KE LIYE (Direct Frontend Dedicated Extraction Engine)
     try {
-        // Yeh direct high-success browser network request hai jo bina server ke kam karti hai
-        const response = await fetch(`https://api.sandipbaruwal.codes/insta/download?url=${encodeURIComponent(videoUrl)}`);
-        const data = await response.json();
+        // Tamam requests secure server backend ke raste jayengi
+        const res = await fetch('/api/download', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ videoUrl })
+        });
         
-        if (data && data.url) {
-            let filename = videoUrl.includes('instagram.com') ? 'instagram_video.mp4' : 'facebook_video.mp4';
-            await startDirectDownload(data.url, filename);
-            if (btn) btn.innerText = "Fetch Video";
-            return;
+        const data = await res.json();
+        
+        if (data && data.downloadUrl) {
+            let filename = 'video_download.mp4';
+            if (videoUrl.includes('tiktok.com')) filename = 'tiktok_video.mp4';
+            if (videoUrl.includes('instagram.com')) filename = 'instagram_video.mp4';
+            if (videoUrl.includes('facebook.com') || videoUrl.includes('fb.watch')) filename = 'facebook_video.mp4';
+
+            // Background download active karein
+            await triggerDirectDownload(data.downloadUrl, filename);
+        } else if (data && data.error) {
+            alert(data.error);
+        } else {
+            alert('Could not download this specific video. Try another link!');
         }
-    } catch (error) {
-        console.log("Primary Engine failed, trying specialized proxy...");
+    } catch (err) {
+        console.error(err);
+        alert('Server is currently under high load. Please try again in a few moments!');
     }
 
-    // 3. BACKUP DIRECT ENGINE FOR INSTAGRAM
-    try {
-        const response = await fetch(`https://api.vkrdown.com/insta?url=${encodeURIComponent(videoUrl)}`);
-        const data = await response.json();
-        
-        if (data && data.data && data.data.video) {
-            await startDirectDownload(data.data.video, 'instagram_video.mp4');
-            if (btn) btn.innerText = "Fetch Video";
-            return;
-        }
-    } catch (e) {
-        console.log("Backup Engine failed");
-    }
-
-    alert('The video link couldn\'t be parsed right now. Please verify the URL or try another link.');
     if (btn) btn.innerText = "Fetch Video";
 }
 
-// Button click setup
+// Button selection check
 const mainBtn = document.querySelector('button');
 if (mainBtn) {
     mainBtn.addEventListener('click', fetchVideo);
