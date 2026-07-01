@@ -1,14 +1,15 @@
-document.getElementById('fetchBtn').addEventListener('click', async () => {
+async function fetchVideo() {
     const videoUrl = document.getElementById('videoUrl').value.trim();
     if (!videoUrl) {
         alert('Please paste a valid video link!');
         return;
     }
 
-    // Loader/Spinner show karein
-    document.getElementById('loader').style.display = 'block';
+    // Loader handle karne ke liye (Aapki CSS classes ke mutabiq)
+    const btn = document.querySelector('button');
+    if (btn) btn.innerText = "Fetching...";
 
-    // 1. Agar TikTok ho toh hamare Vercel backend par bhejien (Kyunki backend par TikTok 100% chal raha hai)
+    // 1. TIKTOK KE LIYE (Backend par bhejien kyunki woh chal raha hai)
     if (videoUrl.includes('tiktok.com')) {
         try {
             const res = await fetch('/api/download', {
@@ -19,17 +20,16 @@ document.getElementById('fetchBtn').addEventListener('click', async () => {
             const data = await res.json();
             if (data.downloadUrl) {
                 window.open(data.downloadUrl, '_blank');
-                document.getElementById('loader').style.display = 'none';
+                if (btn) btn.innerText = "Fetch Video";
                 return;
             }
         } catch (err) {
-            console.log("Backend TikTok failed, falling back to direct fetch");
+            console.log("Backend TikTok failed, trying direct fetch...");
         }
     }
 
-    // 2. INSTAGRAM, FACEBOOK, YOUTUBE KE LIYE (Direct Browser Bypass - No Vercel Server)
+    // 2. INSTAGRAM & FACEBOOK KE LIYE (Direct Browser Bypass)
     try {
-        // Cobalt API ka direct server call bina Vercel proxy ke
         const response = await fetch('https://api.cobalt.tools/api/json', {
             method: 'POST',
             headers: {
@@ -45,7 +45,6 @@ document.getElementById('fetchBtn').addEventListener('click', async () => {
         const data = await response.json();
         
         if (data && data.url) {
-            // Video download link mil gaya, new tab mein open karein
             window.open(data.url, '_blank');
         } else if (data && data.text) {
             alert(`Error: ${data.text}`);
@@ -54,9 +53,14 @@ document.getElementById('fetchBtn').addEventListener('click', async () => {
         }
     } catch (error) {
         console.error("Direct Fetch Error:", error);
-        alert('Server is temporarily busy. Please check your network or try another link!');
+        alert('Server is temporarily busy. Please try another link!');
     }
 
-    // Loader/Spinner hide karein
-    document.getElementById('loader').style.display = 'none';
-});
+    if (btn) btn.innerText = "Fetch Video";
+}
+
+// HTML wale button ke function click ko connect karne ke liye
+const mainBtn = document.querySelector('button');
+if (mainBtn) {
+    mainBtn.addEventListener('click', fetchVideo);
+}
