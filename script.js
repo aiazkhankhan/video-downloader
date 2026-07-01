@@ -1,70 +1,62 @@
-document.getElementById('downloadBtn').addEventListener('click', async () => {
+document.getElementById('fetchBtn').addEventListener('click', async () => {
     const videoUrl = document.getElementById('videoUrl').value.trim();
-    const loader = document.getElementById('loader');
-    const resultArea = document.getElementById('resultArea');
-
     if (!videoUrl) {
-        alert('Please paste a valid video URL first!');
+        alert('Please paste a valid video link!');
         return;
     }
 
-    loader.style.display = 'block';
-    resultArea.style.display = 'none';
+    // Loader/Spinner show karein
+    document.getElementById('loader').style.display = 'block';
 
+    // 1. Agar TikTok ho toh hamare Vercel backend par bhejien (Kyunki backend par TikTok 100% chal raha hai)
+    if (videoUrl.includes('tiktok.com')) {
+        try {
+            const res = await fetch('/api/download', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ videoUrl })
+            });
+            const data = await res.json();
+            if (data.downloadUrl) {
+                window.open(data.downloadUrl, '_blank');
+                document.getElementById('loader').style.display = 'none';
+                return;
+            }
+        } catch (err) {
+            console.log("Backend TikTok failed, falling back to direct fetch");
+        }
+    }
+
+    // 2. INSTAGRAM, FACEBOOK, YOUTUBE KE LIYE (Direct Browser Bypass - No Vercel Server)
     try {
-        const response = await fetch('https://video-downloader-two-eta.vercel.app/api/download', {
+        // Cobalt API ka direct server call bina Vercel proxy ke
+        const response = await fetch('https://api.cobalt.tools/api/json', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ videoUrl: videoUrl })
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                url: videoUrl,
+                filenamePattern: 'basic'
+            })
         });
 
         const data = await response.json();
-
-        if (data.downloadUrl) {
-            loader.style.display = 'none';
-            resultArea.style.display = 'block';
-
-            const finalDownloadLink = document.getElementById('finalDownloadLink');
-            
-            // --- Direct Download (Blob Method) ---
-            finalDownloadLink.onclick = async (e) => {
-                e.preventDefault(); // Browser ko play karne se rokna
-                
-                const originalText = document.querySelector('.success-btn').innerHTML;
-                // Yahan humne "Saving to PC..." ko badal kar sirf "Saving..." kar diya hai
-                document.querySelector('.success-btn').innerHTML = `<i class="fas fa-spinner fa-spin"></i> Saving...`;
-
-                try {
-                    const videoResponse = await fetch(data.downloadUrl);
-                    const blob = await videoResponse.blob();
-                    const blobUrl = window.URL.createObjectURL(blob);
-                    
-                    const tempLink = document.createElement('a');
-                    tempLink.href = blobUrl;
-                    tempLink.download = 'video-downloader.mp4'; // Video file name
-                    document.body.appendChild(tempLink);
-                    tempLink.click();
-                    document.body.removeChild(tempLink);
-                    
-                    document.querySelector('.success-btn').innerHTML = originalText;
-                } catch (err) {
-                    // Fallback: Agar blob fail ho toh naye tab me khol do
-                    window.open(data.downloadUrl, '_blank');
-                    document.querySelector('.success-btn').innerHTML = originalText;
-                }
-            };
-
-            const successBtn = document.querySelector('.success-btn');
-            successBtn.innerHTML = `<i class="fas fa-download"></i> Download Video Now`;
-            
+        
+        if (data && data.url) {
+            // Video download link mil gaya, new tab mein open karein
+            window.open(data.url, '_blank');
+        } else if (data && data.text) {
+            alert(`Error: ${data.text}`);
         } else {
-            alert('Error: ' + (data.error || 'Could not process link.'));
-            loader.style.display = 'none';
+            alert('Could not process this link. Please try another video!');
         }
-
     } catch (error) {
-        console.error("Frontend Error:", error);
-        alert('Make sure your backend server is running!');
-        loader.style.display = 'none';
+        console.error("Direct Fetch Error:", error);
+        alert('Server is temporarily busy. Please check your network or try another link!');
     }
+
+    // Loader/Spinner hide karein
+    document.getElementById('loader').style.display = 'none';
 });
