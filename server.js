@@ -19,34 +19,34 @@ app.post('/api/download', async (req, res) => {
                 return res.json({ downloadUrl: response.data.data.play });
             }
         } catch (e) {
-            console.log("TikTok Backend API Failed");
+            console.log("TikTok Failed");
         }
     } 
     
-    // 2. INSTAGRAM & FACEBOOK ENGINE (Bypass Proxy)
+    // 2. INSTAGRAM & FACEBOOK ENGINE (Solid Public Bypass)
     if (videoUrl.includes('instagram.com') || videoUrl.includes('facebook.com') || videoUrl.includes('fb.watch')) {
-        // Engine 1: Aadil/Sandip Premium High-Speed Bypass
         try {
+            // Nayi premium fast working API
             const response = await axios.get(`https://api.sandipbaruwal.codes/insta/download?url=${encodeURIComponent(videoUrl)}`);
             if (response.data && response.data.url) {
                 return res.json({ downloadUrl: response.data.url });
             }
         } catch (e) {
-            console.log("Instagram Primary Engine Failed");
+            console.log("Instagram Engine 1 Failed, trying fallback...");
         }
 
-        // Engine 2: VKRDown Alternative Base
         try {
+            // Fallback Engine 2
             const response = await axios.get(`https://api.vkrdown.com/server?url=${encodeURIComponent(videoUrl)}`);
             if (response.data && response.data.data && response.data.data.video) {
                 return res.json({ downloadUrl: response.data.data.video });
             }
         } catch (err) {
-            console.log("Instagram Backup Engine Failed");
+            console.log("Instagram Engine 2 Failed");
         }
     }
 
-    // 3. UNIVERSAL COBALT FALLBACK
+    // 3. UNIVERSAL FALLBACK
     try {
         const response = await axios.post('https://api.cobalt.tools/api/json', {
             url: videoUrl,

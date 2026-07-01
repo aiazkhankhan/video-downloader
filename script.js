@@ -1,4 +1,4 @@
-// Browser mein video play hone se rokne aur direct download karne ka function
+// Video ko background me fetch kar ke direct download karwane ka function
 async function forceDownload(url, filename) {
     try {
         const response = await fetch(url);
@@ -13,10 +13,10 @@ async function forceDownload(url, filename) {
         document.body.appendChild(a);
         a.click();
         
-        window.URL.createObjectURL(blobUrl);
+        window.URL.revokeObjectURL(blobUrl);
         document.body.removeChild(a);
     } catch (error) {
-        // Agar background blob download block ho jaye, toh safe backup naye tab mein open karega
+        // Agar browser background stream block kare, toh new tab me open karega safe side ke liye
         window.open(url, '_blank');
     }
 }
@@ -31,8 +31,8 @@ async function fetchVideo() {
     const btn = document.querySelector('button');
     if (btn) btn.innerText = "Downloading...";
 
-    // Saari requests ab Vercel Backend par jayengi
     try {
+        // Saari requests direct backend server par bhejein
         const res = await fetch('/api/download', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -47,7 +47,7 @@ async function fetchVideo() {
             if (videoUrl.includes('instagram.com')) filename = 'instagram_video.mp4';
             if (videoUrl.includes('facebook.com') || videoUrl.includes('fb.watch')) filename = 'facebook_video.mp4';
 
-            // Direct download trigger karein
+            // Direct download function trigger karein
             await forceDownload(data.downloadUrl, filename);
         } else if (data && data.error) {
             alert(data.error);
@@ -62,7 +62,7 @@ async function fetchVideo() {
     if (btn) btn.innerText = "Fetch Video";
 }
 
-// Button connection setup
+// Button setup
 const mainBtn = document.querySelector('button');
 if (mainBtn) {
     mainBtn.addEventListener('click', fetchVideo);
