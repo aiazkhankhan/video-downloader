@@ -8,59 +8,33 @@ async function fetchVideo() {
     const btn = document.querySelector('button');
     if (btn) btn.innerText = "Fetching...";
 
-    // 1. TIKTOK KE LIYE (Backend 100% Working)
-    if (videoUrl.includes('tiktok.com')) {
-        try {
-            const res = await fetch('/api/download', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ videoUrl })
-            });
-            const data = await res.json();
-            if (data.downloadUrl) {
-                window.open(data.downloadUrl, '_blank');
-                if (btn) btn.innerText = "Fetch Video";
-                return;
-            }
-        } catch (err) {
-            console.log("Backend TikTok failed.");
-        }
-    }
-
-    // 2. INSTAGRAM & FACEBOOK (High-Speed Universal Fetcher)
     try {
-        // Yeh dedicated open api direct standard extraction karti hai
-        const response = await fetch(`https://api.vkrdown.com/insta?url=${encodeURIComponent(videoUrl)}`);
-        const data = await response.json();
+        // Saari requests humare Vercel backend par jayengi
+        const res = await fetch('/api/download', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ videoUrl })
+            
+        });
         
-        if (data && data.data && data.data.video) {
-            window.open(data.data.video, '_blank');
-            if (btn) btn.innerText = "Fetch Video";
-            return;
+        const data = await res.json();
+        
+        if (data && data.downloadUrl) {
+            window.open(data.downloadUrl, '_blank');
+        } else {
+            alert(data.error || 'Server is temporarily busy. Please try another link!');
         }
-    } catch (error) {
-        console.log("Primary fetch failed, trying rapid engine...");
+    } catch (err) {
+        console.error("Fetch Error:", err);
+        alert('Connection error. Please try again!');
     }
 
-    // 3. BACKUP (Rapid Snap Engine)
-    try {
-        const response = await fetch(`https://api.sandipbaruwal.codes/insta/download?url=${encodeURIComponent(videoUrl)}`);
-        const data = await response.json();
-        if (data && data.url) {
-            window.open(data.url, '_blank');
-            if (btn) btn.innerText = "Fetch Video";
-            return;
-        }
-    } catch (e) {
-        console.log("Backup failed.");
-    }
-
-    alert('Server is temporarily busy. Please try another video link!');
     if (btn) btn.innerText = "Fetch Video";
 }
 
-// Button click setup
+// Button Connection
 const mainBtn = document.querySelector('button');
 if (mainBtn) {
+    mainBtn.removeEventListener('click', fetchVideo); // Purane events clear karne ke liye
     mainBtn.addEventListener('click', fetchVideo);
 }

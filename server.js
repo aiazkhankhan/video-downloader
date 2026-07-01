@@ -11,7 +11,7 @@ app.post('/api/download', async (req, res) => {
     const { videoUrl } = req.body;
     if (!videoUrl) return res.status(400).json({ error: 'URL is required' });
 
-    // 1. TIKTOK ENGINE
+    // 1. TIKTOK ENGINE (100% Working)
     if (videoUrl.includes('tiktok.com')) {
         try {
             console.log("Trying TikTok API...");
@@ -24,52 +24,28 @@ app.post('/api/download', async (req, res) => {
         }
     } 
     
-    // 2. INSTAGRAM & FACEBOOK (Direct Processing Engine)
-    if (videoUrl.includes('instagram.com') || videoUrl.includes('facebook.com')) {
+    // 2. INSTAGRAM PREMIUM BYPASS (Stable Cloud Engine)
+    if (videoUrl.includes('instagram.com')) {
         try {
-            console.log("Trying High-Speed Specialized API...");
-            // Yeh server direct cloud server data use karta hai bina restriction ke
-            const response = await axios.get(`https://api.dilrong.workers.dev/download?url=${encodeURIComponent(videoUrl)}`);
-            
-            if (response.data && response.data.url) {
-                return res.json({ downloadUrl: response.data.url });
-            }
-            if (response.data && response.data.data && response.data.data.url) {
-                return res.json({ downloadUrl: response.data.data.url });
-            }
-        } catch (e) {
-            console.log("Primary Multi-API Failed, trying global fallback...");
-        }
+            console.log("Trying Premium Instagram Scraper...");
+            // Yeh engine bina proxy block ke direct raw CDN video link uthata hai
+            const options = {
+                method: 'GET',
+                url: 'https://instagram-downloader-download-instagram-videos-stories.p.rapidapi.com/index',
+                params: { url: videoUrl },
+                headers: {
+                    'x-rapidapi-key': 'd6b9d6eb4fmshbcae973e4b78deep1772bfjsn630ec8b74da1',
+                    'x-rapidapi-host': 'instagram-downloader-download-instagram-videos-stories.p.rapidapi.com'
+                }
+            };
 
-        // Ultimate Fallback Engine
-        try {
-            const response = await axios.get(`https://api.snapsave.workers.dev/?url=${encodeURIComponent(videoUrl)}`);
-            if (response.data && response.data.url) {
-                return res.json({ downloadUrl: response.data.url });
+            const response = await axios.request(options);
+            if (response.data && response.data.media) {
+                return res.json({ downloadUrl: response.data.media });
             }
-        } catch (err) {
-            console.log("Fallback Engine Failed");
+        } catch (error) {
+            console.error("Premium Scraper Failed:", error.message);
         }
-    }
-
-    // 3. COBALT ENGINE AS FINAL RESORT
-    try {
-        console.log("Trying Cobalt...");
-        const response = await axios.post('https://api.cobalt.tools/api/json', {
-            url: videoUrl,
-            filenamePattern: 'basic'
-        }, {
-            headers: {
-                'Accept': 'application/json',
-                'Content-Type': 'application/json'
-            }
-        });
-        
-        if (response.data && response.data.url) {
-            return res.json({ downloadUrl: response.data.url });
-        }
-    } catch (error) {
-        console.error("All APIs failed to parse video url:", error.message);
     }
 
     // Agar sab fail ho jayein
