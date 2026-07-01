@@ -11,35 +11,36 @@ app.post('/api/download', async (req, res) => {
     const { videoUrl } = req.body;
     if (!videoUrl) return res.status(400).json({ error: 'URL is required' });
 
-    // --- API 1: TikWM (Primary) ---
-    try {
-        console.log("Trying TikWM API...");
-        const response = await axios.get(`https://www.tikwm.com/api/?url=${encodeURIComponent(videoUrl)}`);
-        if (response.data && response.data.data && response.data.data.play) {
-            console.log("Success with TikWM!");
-            return res.json({ downloadUrl: response.data.data.play });
+    // 1. Agar TikTok ka link ho
+    if (videoUrl.includes('tiktok.com')) {
+        try {
+            console.log("Trying TikTok API...");
+            const response = await axios.get(`https://www.tikwm.com/api/?url=${encodeURIComponent(videoUrl)}`);
+            if (response.data && response.data.data && response.data.data.play) {
+                return res.json({ downloadUrl: response.data.data.play });
+            }
+        } catch (e) {
+            console.log("TikTok API Failed");
         }
-    } catch (e) {
-        console.log("TikWM Failed, trying backup API...");
-    }
-
-    // --- API 2: Dongis (Backup) ---
+    } 
+    
+    // 2. Agar Instagram ya Facebook ka link ho (All-in-One Backup API)
     try {
-        console.log("Trying Backup API...");
-        const backupResponse = await axios.get(`https://api.tiklydown.eu.org/api/download?url=${encodeURIComponent(videoUrl)}`);
+        console.log("Trying Multi-Downloader API...");
+        // Yeh free API Instagram, FB aur baki video links ko download karti hai
+        const response = await axios.get(`https://api.scraptik.com/download?url=${encodeURIComponent(videoUrl)}`);
         
-        if (backupResponse.data && backupResponse.data.video && backupResponse.data.video.noWatermark) {
-            console.log("Success with Backup API!");
-            return res.json({ downloadUrl: backupResponse.data.video.noWatermark });
+        if (response.data && response.data.url) {
+            return res.json({ downloadUrl: response.data.url });
         }
     } catch (error) {
-        console.error("Both APIs Failed:", error.message);
+        console.error("Downloader API Error:", error.message);
     }
 
-    // Agar dono fail ho jayein
+    // Agar sab fail ho jayein
     res.status(500).json({ error: 'Both download servers are busy. Please try another video link!' });
 });
 
 app.listen(PORT, () => {
-    console.log(`Balle Balle! Server is running on http://localhost:${PORT}`);
+    console.log(`Server is running on port ${PORT}`);
 });
