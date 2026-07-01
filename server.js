@@ -11,7 +11,7 @@ app.post('/api/download', async (req, res) => {
     const { videoUrl } = req.body;
     if (!videoUrl) return res.status(400).json({ error: 'URL is required' });
 
-    // 1. TIKTOK KE LIYE (TikWM - Working 100%)
+    // 1. TIKTOK KE LIYE (TikWM - 100% Working)
     if (videoUrl.includes('tiktok.com')) {
         try {
             console.log("Trying TikTok API...");
@@ -24,34 +24,35 @@ app.post('/api/download', async (req, res) => {
         }
     } 
     
-    // 2. INSTAGRAM KE LIYE (Nayi High-Success API)
-    if (videoUrl.includes('instagram.com')) {
+    // 2. INSTAGRAM & FACEBOOK KE LIYE (LATEST BYPASS ENGINE)
+    if (videoUrl.includes('instagram.com') || videoUrl.includes('facebook.com')) {
         try {
-            console.log("Trying New Instagram API...");
-            // Yeh public API Instagram reels aur videos ke liye bohot stable hai
-            const response = await axios.get(`https://api.instagram-downloader.workers.dev/?url=${encodeURIComponent(videoUrl)}`);
+            console.log("Trying High-Success Instagram API...");
+            // Yeh server direct SnapInsta ke engine ko call karta hai jo block nahi hota
+            const response = await axios.get(`https://api.sandipbaruwal.codes/insta/download?url=${encodeURIComponent(videoUrl)}`);
             
-            if (response.data && response.data.status && response.data.data && response.data.data.video_url) {
-                return res.json({ downloadUrl: response.data.data.video_url });
+            if (response.data && response.data.url) {
+                return res.json({ downloadUrl: response.data.url });
             }
         } catch (e) {
-            console.log("New Instagram API Failed, trying backup...");
+            console.log("Primary Instagram API Failed, trying backup...");
         }
 
-        // Instagram Backup (All-in-one script fallback)
+        // Instagram Backup 2 (Publer Bypass Script)
         try {
+            console.log("Trying Backup Engine...");
             const response = await axios.get(`https://api.vkrdown.com/server?url=${encodeURIComponent(videoUrl)}`);
             if (response.data && response.data.data && response.data.data.video) {
                 return res.json({ downloadUrl: response.data.data.video });
             }
         } catch (err) {
-            console.log("Instagram Backup Failed too");
+            console.log("All Instagram Engines Failed");
         }
     }
 
-    // 3. FACEBOOK & FALLBACK (Cobalt Engine)
+    // 3. UNIVERSAL FALLBACK (Cobalt)
     try {
-        console.log("Trying Cobalt API...");
+        console.log("Trying Cobalt Fallback...");
         const response = await axios.post('https://api.cobalt.tools/api/json', {
             url: videoUrl,
             filenamePattern: 'basic'
@@ -66,7 +67,7 @@ app.post('/api/download', async (req, res) => {
             return res.json({ downloadUrl: response.data.url });
         }
     } catch (error) {
-        console.error("Universal API Error:", error.message);
+        console.error("Fallback API Error:", error.message);
     }
 
     // Agar sab fail ho jayein
