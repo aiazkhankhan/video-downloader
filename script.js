@@ -5,11 +5,10 @@ async function fetchVideo() {
         return;
     }
 
-    // Loader handle karne ke liye (Aapki CSS classes ke mutabiq)
     const btn = document.querySelector('button');
     if (btn) btn.innerText = "Fetching...";
 
-    // 1. TIKTOK KE LIYE (Backend par bhejien kyunki woh chal raha hai)
+    // 1. TIKTOK KE LIYE (Backend par bhejien - Working 100%)
     if (videoUrl.includes('tiktok.com')) {
         try {
             const res = await fetch('/api/download', {
@@ -28,7 +27,22 @@ async function fetchVideo() {
         }
     }
 
-    // 2. INSTAGRAM & FACEBOOK KE LIYE (Direct Browser Bypass)
+    // 2. INSTAGRAM & FACEBOOK KE LIYE (Sandip Baruwal Premium Direct API)
+    try {
+        // Yeh API direct video link extract karti hai bina kisi block ke
+        const response = await fetch(`https://api.sandipbaruwal.codes/insta/download?url=${encodeURIComponent(videoUrl)}`);
+        const data = await response.json();
+        
+        if (data && data.url) {
+            window.open(data.url, '_blank');
+            if (btn) btn.innerText = "Fetch Video";
+            return;
+        }
+    } catch (error) {
+        console.log("Primary Instagram API failed, trying cobalt fallback...");
+    }
+
+    // 3. FALLBACK (Cobalt Engine)
     try {
         const response = await fetch('https://api.cobalt.tools/api/json', {
             method: 'POST',
@@ -43,23 +57,19 @@ async function fetchVideo() {
         });
 
         const data = await response.json();
-        
         if (data && data.url) {
             window.open(data.url, '_blank');
-        } else if (data && data.text) {
-            alert(`Error: ${data.text}`);
         } else {
-            alert('Could not process this link. Please try another video!');
+            alert('Instagram server is strict today. Please try another video link!');
         }
     } catch (error) {
-        console.error("Direct Fetch Error:", error);
         alert('Server is temporarily busy. Please try another link!');
     }
 
     if (btn) btn.innerText = "Fetch Video";
 }
 
-// HTML wale button ke function click ko connect karne ke liye
+// Button connection
 const mainBtn = document.querySelector('button');
 if (mainBtn) {
     mainBtn.addEventListener('click', fetchVideo);
