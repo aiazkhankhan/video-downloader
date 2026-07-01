@@ -1,5 +1,5 @@
-// Video ko direct file ki tarah download karwane ka function
-async function downloadFile(url, filename) {
+// Browser mein video play hone se rokne aur direct download karne ka function
+async function forceDownload(url, filename) {
     try {
         const response = await fetch(url);
         const blob = await response.blob();
@@ -8,15 +8,15 @@ async function downloadFile(url, filename) {
         const a = document.createElement('a');
         a.style.display = 'none';
         a.href = blobUrl;
-        a.download = filename || 'video.mp4';
+        a.download = filename;
         
         document.body.appendChild(a);
         a.click();
         
-        window.URL.revokeObjectURL(blobUrl);
+        window.URL.createObjectURL(blobUrl);
         document.body.removeChild(a);
     } catch (error) {
-        // Agar browser background fetch block kare (CORS issue), toh safe side new tab me open karwa do
+        // Agar background blob download block ho jaye, toh safe backup naye tab mein open karega
         window.open(url, '_blank');
     }
 }
@@ -31,58 +31,38 @@ async function fetchVideo() {
     const btn = document.querySelector('button');
     if (btn) btn.innerText = "Downloading...";
 
-    // 1. TIKTOK KE LIYE
-    if (videoUrl.includes('tiktok.com')) {
-        try {
-            const res = await fetch('/api/download', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ videoUrl })
-            });
-            const data = await res.json();
-            if (data.downloadUrl) {
-                // Play karne ke bajaye direct file download hogi
-                await downloadFile(data.downloadUrl, 'tiktok_video.mp4');
-                if (btn) btn.innerText = "Fetch Video";
-                return;
-            }
-        } catch (err) {
-            console.log("TikTok backend failed.");
-        }
-    }
-
-    // 2. INSTAGRAM & FACEBOOK KE LIYE (Bypass with Worker API)
+    // Saari requests ab Vercel Backend par jayengi
     try {
-        const response = await fetch(`https://api.vkrdown.com/insta?url=${encodeURIComponent(videoUrl)}`);
-        const data = await response.json();
+        const res = await fetch('/api/download', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ videoUrl })
+        });
         
-        if (data && data.data && data.data.video) {
-            await downloadFile(data.data.video, 'instagram_video.mp4');
-            if (btn) btn.innerText = "Fetch Video";
-            return;
+        const data = await res.json();
+        
+        if (data && data.downloadUrl) {
+            let filename = 'video_download.mp4';
+            if (videoUrl.includes('tiktok.com')) filename = 'tiktok_video.mp4';
+            if (videoUrl.includes('instagram.com')) filename = 'instagram_video.mp4';
+            if (videoUrl.includes('facebook.com') || videoUrl.includes('fb.watch')) filename = 'facebook_video.mp4';
+
+            // Direct download trigger karein
+            await forceDownload(data.downloadUrl, filename);
+        } else if (data && data.error) {
+            alert(data.error);
+        } else {
+            alert('Could not parse this link. Please try another video!');
         }
-    } catch (error) {
-        console.log("Primary Insta fetch failed.");
+    } catch (err) {
+        console.error(err);
+        alert('Server connection error. Please try again!');
     }
 
-    // 3. BACKUP INSTAGRAM API
-    try {
-        const response = await fetch(`https://api.sandipbaruwal.codes/insta/download?url=${encodeURIComponent(videoUrl)}`);
-        const data = await response.json();
-        if (data && data.url) {
-            await downloadFile(data.url, 'instagram_video.mp4');
-            if (btn) btn.innerText = "Fetch Video";
-            return;
-        }
-    } catch (e) {
-        console.log("Backup failed.");
-    }
-
-    alert('Both download servers are busy. Please try another video link!');
     if (btn) btn.innerText = "Fetch Video";
 }
 
-// Button setup
+// Button connection setup
 const mainBtn = document.querySelector('button');
 if (mainBtn) {
     mainBtn.addEventListener('click', fetchVideo);
