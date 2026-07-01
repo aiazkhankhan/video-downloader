@@ -11,7 +11,7 @@ app.post('/api/download', async (req, res) => {
     const { videoUrl } = req.body;
     if (!videoUrl) return res.status(400).json({ error: 'URL is required' });
 
-    // 1. Agar TikTok ka link ho (TikWM sab se best hai TikTok ke liye)
+    // 1. TIKTOK KE LIYE (TikWM)
     if (videoUrl.includes('tiktok.com')) {
         try {
             console.log("Trying TikTok API...");
@@ -24,31 +24,40 @@ app.post('/api/download', async (req, res) => {
         }
     } 
     
-    // 2. Instagram aur Facebook ke liye (Universal Social Downloader API)
-    try {
-        console.log("Trying Social Downloader API...");
-        // Yeh high-speed fallback API hai jo FB/Insta dono ko support karti hai
-        const response = await axios.get(`https://api.vkrdown.com/server?url=${encodeURIComponent(videoUrl)}`);
-        
-        if (response.data && response.data.data && response.data.data.video) {
-            return res.json({ downloadUrl: response.data.data.video });
+    // 2. INSTAGRAM KE LIYE (Specialized Insta API)
+    if (videoUrl.includes('instagram.com')) {
+        try {
+            console.log("Trying Instagram Dedicated API...");
+            const response = await axios.get(`https://api.vkrdown.com/insta?url=${encodeURIComponent(videoUrl)}`);
+            if (response.data && response.data.data && response.data.data.video) {
+                return res.json({ downloadUrl: response.data.data.video });
+            }
+        } catch (e) {
+            console.log("Instagram Dedicated API Failed, trying Cobalt...");
         }
-    } catch (error) {
-        console.error("Social Downloader API Error:", error.message);
     }
 
-    // Agar upar wali API fail ho toh Yeh Backup Multi-Downloader API hai
+    // 3. FACEBOOK & FALLBACK (Cobalt Engine)
     try {
-        console.log("Trying Backup Multi-Downloader...");
-        const response = await axios.get(`https://api.cors.io/download?url=${encodeURIComponent(videoUrl)}`);
+        console.log("Trying Cobalt API...");
+        const response = await axios.post('https://api.cobalt.tools/api/json', {
+            url: videoUrl,
+            filenamePattern: 'basic'
+        }, {
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            }
+        });
+        
         if (response.data && response.data.url) {
             return res.json({ downloadUrl: response.data.url });
         }
-    } catch (err) {
-        console.error("Backup API Error:", err.message);
+    } catch (error) {
+        console.error("Cobalt API Error:", error.message);
     }
 
-    // Agar saari APIs fail ho jayein
+    // Agar sab fail ho jayein
     res.status(500).json({ error: 'Both download servers are busy. Please try another video link!' });
 });
 
